@@ -1,25 +1,36 @@
-# 🍅 Pomobhai - Your Friendly Pomodoro Timer
+# 🍅 Pomobhai - Complete Timer & Alarm System
 
-> **Pomobhai** (Pomodoro + Bhai) - Because every coder needs a brother who reminds them to take breaks! 🇮🇳
-
-A beautiful, feature-rich Pomodoro Timer built with vanilla HTML, CSS, and JavaScript. Track your productivity with this minimalist yet powerful timer.
+> **Pomobhai** (Pomodoro + Bhai) - Your all-in-one productivity tool with Pomodoro Timer, Countdown Timer, and Alarm! 🇮🇳
 
 ## ✨ Features
 
-- **Timer Modes** - Focus (25min), Short Break (5min), Long Break (15min)
-- **Progress Ring** - Visual countdown with animated ring
-- **Statistics** - Track today's sessions, total sessions, and total focus time
-- **Sound Alerts** - Audio notifications when timer completes
-- **Browser Notifications** - Get notified even when tab is inactive
-- **Auto-Start** - Automatically switches between focus and breaks
-- **Keyboard Shortcuts** - Space (Start/Pause), R (Reset), S (Skip)
-- **Custom Durations** - Adjust focus/break times to your preference
-- **Persistent Storage** - Saves progress in localStorage
-- **Responsive** - Works perfectly on mobile and desktop
-- **Dark Theme** - Easy on the eyes with beautiful dark design
+### 🍅 Pomodoro Timer
+- Focus (25min), Short Break (5min), Long Break (15min)
+- Progress ring animation
+- Auto-start between sessions
+- Session counter & statistics
+- Sound & browser notifications
+
+### ⏱️ Countdown Timer
+- Set hours, minutes, seconds
+- Visual progress ring
+- Start/Pause/Reset controls
+- Sound notification on completion
+
+### 🔔 Alarm System
+- Set alarm for specific time
+- AM/PM support
+- Multiple alarm sounds:
+  - Classic Beep
+  - Gentle Chime
+  - Urgent
+  - Phone Ring
+- Shows time remaining
+- Continuous ringing until stopped
+- Browser notifications
 
 ## 🚀 Quick Start
 
-1. Clone this repository
+1. Clone the repository
 ```bash
-git clone https://github.com/YOUR_USERNAME/pomobhai.git
+git clone https://github.com/Pallavi-EC144/pomobhai.git
