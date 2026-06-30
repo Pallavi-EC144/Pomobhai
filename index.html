@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍅 Pomobhai - Pomodoro Timer</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍅</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>🍅 Pomobhai</h1>
+            <span id="sessionCount">Sessions: 0</span>
+        </header>
+
+        <!-- Timer Display -->
+        <div class="timer-display">
+            <svg class="progress-ring" width="250" height="250">
+                <circle class="progress-ring__bg" 
+                        cx="125" cy="125" r="110" 
+                        fill="none" stroke="#2c3e50" stroke-width="8"/>
+                <circle id="progressRing" 
+                        cx="125" cy="125" r="110" 
+                        fill="none" stroke="#e94560" stroke-width="8"
+                        stroke-dasharray="691.15" 
+                        stroke-dashoffset="0"
+                        stroke-linecap="round"/>
+            </svg>
+            <div class="timer-text">
+                <span id="minutes">25</span>:<span id="seconds">00</span>
+            </div>
+        </div>
+
+        <!-- Mode Indicator -->
+        <div class="mode-indicator">
+            <span id="current-mode">🎯 Focus</span>
+        </div>
+
+        <!-- Control Buttons -->
+        <div class="controls">
+            <button id="startBtn" class="btn btn-start">▶ Start</button>
+            <button id="pauseBtn" class="btn btn-pause">⏸ Pause</button>
+            <button id="resetBtn" class="btn btn-reset">⟳ Reset</button>
+            <button id="skipBtn" class="btn btn-skip">⏭ Skip</button>
+        </div>
+
+        <!-- Mode Buttons -->
+        <div class="mode-buttons">
+            <button id="focusMode" class="mode-btn active">🎯 Focus</button>
+            <button id="shortBreak" class="mode-btn">☕ Short</button>
+            <button id="longBreak" class="mode-btn">🌙 Long</button>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats">
+            <div class="stat-item">
+                <span class="stat-label">Today</span>
+                <span id="todaySessions" class="stat-value">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Total</span>
+                <span id="totalSessions" class="stat-value">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Focus Time</span>
+                <span id="focusTime" class="stat-value">0h</span>
+            </div>
+        </div>
+
+        <!-- Settings -->
+        <details class="settings">
+            <summary>⚙️ Settings</summary>
+            <div class="settings-content">
+                <div class="setting-group">
+                    <label>
+                        Focus Duration (min)
+                        <input type="number" id="focusDuration" value="25" min="1" max="60">
+                    </label>
+                    <label>
+                        Short Break (min)
+                        <input type="number" id="shortBreakDuration" value="5" min="1" max="15">
+                    </label>
+                    <label>
+                        Long Break (min)
+                        <input type="number" id="longBreakDuration" value="15" min="1" max="30">
+                    </label>
+                    <button id="saveSettings" class="btn btn-save">💾 Save Settings</button>
+                </div>
+            </div>
+        </details>
+
+        <!-- Keyboard Shortcuts Hint -->
+        <div class="shortcuts-hint">
+            <span>⌨️ Space: Start/Pause</span>
+            <span>R: Reset</span>
+            <span>S: Skip</span>
+            <span>🔊 Sound On</span>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
