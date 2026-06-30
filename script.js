@@ -1,29 +1,43 @@
 // ========================================
-// POMOBAHI - Pomodoro Timer
+// POMOBAHI - Complete Timer & Alarm System
 // ========================================
 
 // ========================================
 // STATE
 // ========================================
 let state = {
+    // Pomodoro
     timeLeft: 25 * 60,
     timer: null,
     isRunning: false,
     currentMode: 'focus',
     sessionsToday: 0,
     totalSessions: 0,
-    totalFocusTime: 0, // in minutes
+    totalFocusTime: 0,
     settings: {
         focus: 25,
         shortBreak: 5,
         longBreak: 15
-    }
+    },
+    
+    // Timer
+    timerTimeLeft: 5 * 60,
+    timerRunning: false,
+    timerInterval: null,
+    timerTotalSeconds: 5 * 60,
+    
+    // Alarm
+    alarmTime: null,
+    alarmInterval: null,
+    alarmRinging: false,
+    alarmSound: 'beep'
 };
 
 // ========================================
 // DOM ELEMENTS
 // ========================================
 const DOM = {
+    // Pomodoro
     minutes: document.getElementById('minutes'),
     seconds: document.getElementById('seconds'),
     progressRing: document.getElementById('progressRing'),
@@ -32,26 +46,58 @@ const DOM = {
     todaySessions: document.getElementById('todaySessions'),
     totalSessions: document.getElementById('totalSessions'),
     focusTime: document.getElementById('focusTime'),
-    
     startBtn: document.getElementById('startBtn'),
     pauseBtn: document.getElementById('pauseBtn'),
     resetBtn: document.getElementById('resetBtn'),
     skipBtn: document.getElementById('skipBtn'),
-    
     focusMode: document.getElementById('focusMode'),
     shortBreak: document.getElementById('shortBreak'),
     longBreak: document.getElementById('longBreak'),
     
+    // Timer
+    timerMinutes: document.getElementById('timerMinutes'),
+    timerSeconds: document.getElementById('timerSeconds'),
+    timerProgressRing: document.getElementById('timerProgressRing'),
+    timerHours: document.getElementById('timerHours'),
+    timerMinutesInput: document.getElementById('timerMinutesInput'),
+    timerSecondsInput: document.getElementById('timerSecondsInput'),
+    timerStartBtn: document.getElementById('timerStartBtn'),
+    timerPauseBtn: document.getElementById('timerPauseBtn'),
+    timerResetBtn: document.getElementById('timerResetBtn'),
+    timerStatus: document.getElementById('timerStatus'),
+    
+    // Alarm
+    alarmHours: document.getElementById('alarmHours'),
+    alarmMinutes: document.getElementById('alarmMinutes'),
+    alarmStatus: document.getElementById('alarmStatus'),
+    alarmHoursInput: document.getElementById('alarmHoursInput'),
+    alarmMinutesInput: document.getElementById('alarmMinutesInput'),
+    alarmAmPm: document.getElementById('alarmAmPm'),
+    alarmSetBtn: document.getElementById('alarmSetBtn'),
+    alarmStopBtn: document.getElementById('alarmStopBtn'),
+    alarmSetTime: document.getElementById('alarmSetTime'),
+    alarmTimeUntil: document.getElementById('alarmTimeUntil'),
+    alarmSoundSelect: document.getElementById('alarmSoundSelect'),
+    
+    // Settings
     focusDuration: document.getElementById('focusDuration'),
     shortBreakDuration: document.getElementById('shortBreakDuration'),
     longBreakDuration: document.getElementById('longBreakDuration'),
     saveSettings: document.getElementById('saveSettings'),
+    
+    // Tabs
+    pomodoroTab: document.getElementById('pomodoroTab'),
+    timerTab: document.getElementById('timerTab'),
+    alarmTab: document.getElementById('alarmTab'),
+    pomodoroTabContent: document.getElementById('pomodoroTabContent'),
+    timerTabContent: document.getElementById('timerTabContent'),
+    alarmTabContent: document.getElementById('alarmTabContent')
 };
 
 // ========================================
 // CONSTANTS
 // ========================================
-const CIRCUMFERENCE = 691.15; // 2 * PI * 110
+const CIRCUMFERENCE = 691.15;
 
 // ========================================
 // INITIALIZATION
@@ -61,12 +107,13 @@ function init() {
     setMode('focus');
     updateUI();
     setupEventListeners();
+    updateAlarmDisplay();
     console.log('🍅 Pomobhai initialized!');
     console.log('Controls: Space = Start/Pause, R = Reset, S = Skip');
 }
 
 // ========================================
-// CORE FUNCTIONS
+// POMODORO FUNCTIONS
 // ========================================
 function setMode(mode) {
     state.currentMode = mode;
@@ -100,11 +147,8 @@ function startTimer() {
             DOM.startBtn.style.opacity = '1';
             document.querySelector('.timer-text').classList.remove('running');
             
-            // Handle session completion
             handleSessionComplete();
-            
-            // Play sound and show notification
-            playSound();
+            playAlarmSound('beep');
             showNotification();
         }
     }, 1000);
@@ -133,32 +177,306 @@ function skipTimer() {
     handleSessionComplete();
 }
 
-// ========================================
-// SESSION MANAGEMENT
-// ========================================
 function handleSessionComplete() {
     if (state.currentMode === 'focus') {
         state.sessionsToday++;
         state.totalSessions++;
         state.totalFocusTime += state.settings.focus;
-        
-        // Save to localStorage
         saveToLocalStorage();
-        
-        // Update UI
         updateUI();
         
-        // Auto-start next mode (focus -> short break)
         const nextMode = state.sessionsToday % 4 === 0 ? 'longBreak' : 'shortBreak';
         setTimeout(() => {
             setMode(nextMode);
             startTimer();
-        }, 3000); // Wait 3 seconds before starting next session
+        }, 3000);
     } else {
-        // Break ended, go back to focus
         setTimeout(() => {
             setMode('focus');
         }, 2000);
+    }
+}
+
+// ========================================
+// TIMER FUNCTIONS
+// ========================================
+function startTimerMode() {
+    if (state.timerRunning) return;
+    
+    const hours = parseInt(DOM.timerHours.value) || 0;
+    const minutes = parseInt(DOM.timerMinutesInput.value) || 0;
+    const seconds = parseInt(DOM.timerSecondsInput.value) || 0;
+    
+    const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+    
+    if (totalSeconds === 0) {
+        DOM.timerStatus.textContent = '⚠️ Please set a time';
+        return;
+    }
+    
+    if (state.timerTimeLeft === 0 || state.timerTimeLeft !== totalSeconds) {
+        state.timerTimeLeft = totalSeconds;
+        state.timerTotalSeconds = totalSeconds;
+    }
+    
+    state.timerRunning = true;
+    DOM.timerStatus.textContent = '⏱️ Running...';
+    DOM.timerStartBtn.textContent = '▶ Running';
+    DOM.timerStartBtn.style.opacity = '0.7';
+    
+    state.timerInterval = setInterval(() => {
+        state.timerTimeLeft--;
+        updateTimerDisplay();
+        
+        if (state.timerTimeLeft === 0) {
+            clearInterval(state.timerInterval);
+            state.timerRunning = false;
+            DOM.timerStatus.textContent = '⏰ Time\'s Up!';
+            DOM.timerStartBtn.textContent = '▶ Start';
+            DOM.timerStartBtn.style.opacity = '1';
+            playAlarmSound('urgent');
+            showTimerNotification();
+        }
+    }, 1000);
+}
+
+function pauseTimerMode() {
+    if (state.timerInterval) {
+        clearInterval(state.timerInterval);
+        state.timerInterval = null;
+        state.timerRunning = false;
+        DOM.timerStatus.textContent = '⏸️ Paused';
+        DOM.timerStartBtn.textContent = '▶ Start';
+        DOM.timerStartBtn.style.opacity = '1';
+    }
+}
+
+function resetTimerMode() {
+    if (state.timerInterval) {
+        clearInterval(state.timerInterval);
+        state.timerInterval = null;
+        state.timerRunning = false;
+    }
+    
+    const hours = parseInt(DOM.timerHours.value) || 0;
+    const minutes = parseInt(DOM.timerMinutesInput.value) || 0;
+    const seconds = parseInt(DOM.timerSecondsInput.value) || 0;
+    
+    state.timerTimeLeft = hours * 3600 + minutes * 60 + seconds;
+    state.timerTotalSeconds = state.timerTimeLeft;
+    state.timerRunning = false;
+    
+    DOM.timerStatus.textContent = '⏸️ Reset';
+    DOM.timerStartBtn.textContent = '▶ Start';
+    DOM.timerStartBtn.style.opacity = '1';
+    updateTimerDisplay();
+}
+
+function updateTimerDisplay() {
+    const hours = Math.floor(state.timerTimeLeft / 3600);
+    const minutes = Math.floor((state.timerTimeLeft % 3600) / 60);
+    const seconds = state.timerTimeLeft % 60;
+    
+    DOM.timerMinutes.textContent = String(hours * 60 + minutes).padStart(2, '0');
+    DOM.timerSeconds.textContent = String(seconds).padStart(2, '0');
+    
+    // Update progress ring
+    if (state.timerTotalSeconds > 0) {
+        const progress = 1 - (state.timerTimeLeft / state.timerTotalSeconds);
+        const offset = CIRCUMFERENCE * progress;
+        DOM.timerProgressRing.style.strokeDashoffset = offset;
+    }
+}
+
+// ========================================
+// ALARM FUNCTIONS
+// ========================================
+function setAlarm() {
+    let hours = parseInt(DOM.alarmHoursInput.value) || 0;
+    let minutes = parseInt(DOM.alarmMinutesInput.value) || 0;
+    const ampm = DOM.alarmAmPm.value;
+    
+    // Convert to 24-hour format
+    if (ampm === 'PM' && hours !== 12) hours += 12;
+    if (ampm === 'AM' && hours === 12) hours = 0;
+    
+    const now = new Date();
+    const alarmDate = new Date();
+    alarmDate.setHours(hours, minutes, 0, 0);
+    
+    // If alarm time is in the past, set for tomorrow
+    if (alarmDate <= now) {
+        alarmDate.setDate(alarmDate.getDate() + 1);
+    }
+    
+    state.alarmTime = alarmDate;
+    DOM.alarmSetTime.textContent = alarmDate.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true 
+    });
+    
+    DOM.alarmStatus.textContent = '⏰ Alarm SET';
+    DOM.alarmStatus.className = 'alarm-status active';
+    
+    // Check alarm every second
+    if (state.alarmInterval) clearInterval(state.alarmInterval);
+    
+    state.alarmInterval = setInterval(() => {
+        const now = new Date();
+        const diff = state.alarmTime - now;
+        
+        // Update time until
+        if (diff > 0) {
+            const hours = Math.floor(diff / 3600000);
+            const minutes = Math.floor((diff % 3600000) / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+            DOM.alarmTimeUntil.textContent = 
+                `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        } else {
+            DOM.alarmTimeUntil.textContent = '🔔 NOW!';
+        }
+        
+        // Check if it's time to ring
+        if (state.alarmTime && now >= state.alarmTime && !state.alarmRinging) {
+            triggerAlarm();
+        }
+    }, 1000);
+    
+    // Update alarm display
+    updateAlarmDisplay();
+}
+
+function triggerAlarm() {
+    state.alarmRinging = true;
+    DOM.alarmStatus.textContent = '🔔 ALARM RINGING!';
+    DOM.alarmStatus.className = 'alarm-status ringing';
+    document.querySelector('.alarm-display').classList.add('alarm-ringing');
+    
+    // Play alarm sound continuously
+    playAlarmSound(state.alarmSound, true);
+    
+    // Show notification
+    if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('🔔 Alarm!', {
+            body: 'Time to wake up!',
+            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🔔</text></svg>'
+        });
+    }
+}
+
+function stopAlarm() {
+    state.alarmRinging = false;
+    state.alarmTime = null;
+    
+    if (state.alarmInterval) {
+        clearInterval(state.alarmInterval);
+        state.alarmInterval = null;
+    }
+    
+    DOM.alarmStatus.textContent = '⏰ Alarm stopped';
+    DOM.alarmStatus.className = 'alarm-status';
+    DOM.alarmSetTime.textContent = 'Not Set';
+    DOM.alarmTimeUntil.textContent = '--:--';
+    document.querySelector('.alarm-display').classList.remove('alarm-ringing');
+}
+
+function updateAlarmDisplay() {
+    if (state.alarmTime) {
+        const hours = state.alarmTime.getHours();
+        const minutes = state.alarmTime.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const displayHours = hours % 12 || 12;
+        
+        DOM.alarmHours.textContent = String(displayHours).padStart(2, '0');
+        DOM.alarmMinutes.textContent = String(minutes).padStart(2, '0');
+    } else {
+        DOM.alarmHours.textContent = '00';
+        DOM.alarmMinutes.textContent = '00';
+    }
+}
+
+// ========================================
+// ALARM SOUND SYSTEM
+// ========================================
+let alarmAudioContext = null;
+let alarmOscillators = [];
+let alarmGainNodes = [];
+let isAlarmPlaying = false;
+
+function playAlarmSound(type = 'beep', loop = false) {
+    try {
+        if (isAlarmPlaying && loop) return;
+        if (isAlarmPlaying && !loop) {
+            // Stop current sound and play new one
+            stopAlarmSound();
+        }
+        
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        alarmAudioContext = audioContext;
+        
+        const sounds = {
+            'beep': { frequency: 880, type: 'sine', pattern: [0.2, 0.1] },
+            'gentle': { frequency: 523.25, type: 'sine', pattern: [0.3, 0.2] },
+            'urgent': { frequency: 1000, type: 'square', pattern: [0.1, 0.1] },
+            'phone': { frequency: 440, type: 'sawtooth', pattern: [0.15, 0.15] }
+        };
+        
+        const sound = sounds[type] || sounds['beep'];
+        isAlarmPlaying = true;
+        
+        function playBeep() {
+            if (!isAlarmPlaying) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = sound.frequency;
+            oscillator.type = sound.type;
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + sound.pattern[0]);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + sound.pattern[0]);
+            
+            alarmOscillators.push(oscillator);
+            alarmGainNodes.push(gainNode);
+            
+            if (loop && isAlarmPlaying) {
+                setTimeout(() => {
+                    if (isAlarmPlaying) playBeep();
+                }, (sound.pattern[0] + sound.pattern[1]) * 1000);
+            }
+        }
+        
+        // Play 3 beeps for non-looping
+        if (!loop) {
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => playBeep(), i * 400);
+            }
+            setTimeout(() => { isAlarmPlaying = false; }, 1500);
+        } else {
+            playBeep();
+        }
+    } catch (e) {
+        console.log('Audio not available');
+    }
+}
+
+function stopAlarmSound() {
+    isAlarmPlaying = false;
+    alarmOscillators.forEach(osc => {
+        try { osc.stop(); } catch(e) {}
+    });
+    alarmOscillators = [];
+    alarmGainNodes = [];
+    if (alarmAudioContext) {
+        try { alarmAudioContext.close(); } catch(e) {}
+        alarmAudioContext = null;
     }
 }
 
@@ -206,44 +524,8 @@ function updateActiveButton() {
 }
 
 // ========================================
-// SOUND & NOTIFICATIONS
+// NOTIFICATIONS
 // ========================================
-function playSound() {
-    try {
-        // Create a simple beep using Web Audio API
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.value = 880;
-        oscillator.type = 'sine';
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-        
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.5);
-        
-        // Play a second beep
-        setTimeout(() => {
-            const osc2 = audioContext.createOscillator();
-            const gain2 = audioContext.createGain();
-            osc2.connect(gain2);
-            gain2.connect(audioContext.destination);
-            osc2.frequency.value = 880;
-            osc2.type = 'sine';
-            gain2.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-            osc2.start();
-            osc2.stop(audioContext.currentTime + 0.5);
-        }, 200);
-    } catch (e) {
-        console.log('Audio not available');
-    }
-}
-
 function showNotification() {
     if ('Notification' in window && Notification.permission === 'granted') {
         const modeNames = {
@@ -257,6 +539,15 @@ function showNotification() {
         });
     } else if ('Notification' in window) {
         Notification.requestPermission();
+    }
+}
+
+function showTimerNotification() {
+    if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('⏱️ Timer Complete!', {
+            body: 'Your countdown timer has finished!',
+            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">⏱️</text></svg>'
+        });
     }
 }
 
@@ -284,7 +575,6 @@ function loadFromLocalStorage() {
         if (saved) {
             const data = JSON.parse(saved);
             
-            // Check if it's a new day
             if (data.date !== new Date().toDateString()) {
                 state.sessionsToday = 0;
             } else {
@@ -295,7 +585,6 @@ function loadFromLocalStorage() {
             state.totalFocusTime = data.totalFocusTime || 0;
             state.settings = data.settings || state.settings;
             
-            // Update input fields
             DOM.focusDuration.value = state.settings.focus;
             DOM.shortBreakDuration.value = state.settings.shortBreak;
             DOM.longBreakDuration.value = state.settings.longBreak;
@@ -322,12 +611,10 @@ function saveSettings() {
     state.settings.shortBreak = shortBreak;
     state.settings.longBreak = longBreak;
     
-    // Reset timer with new settings
     pauseTimer();
     setMode(state.currentMode);
     saveToLocalStorage();
     
-    // Show feedback
     DOM.saveSettings.textContent = '✅ Saved!';
     setTimeout(() => {
         DOM.saveSettings.textContent = '💾 Save Settings';
@@ -335,16 +622,45 @@ function saveSettings() {
 }
 
 // ========================================
+// TAB SWITCHING
+// ========================================
+function switchTab(tab) {
+    // Hide all tab contents
+    DOM.pomodoroTabContent.classList.remove('active');
+    DOM.timerTabContent.classList.remove('active');
+    DOM.alarmTabContent.classList.remove('active');
+    
+    // Remove active class from all tabs
+    DOM.pomodoroTab.classList.remove('active');
+    DOM.timerTab.classList.remove('active');
+    DOM.alarmTab.classList.remove('active');
+    
+    // Show selected tab
+    if (tab === 'pomodoro') {
+        DOM.pomodoroTabContent.classList.add('active');
+        DOM.pomodoroTab.classList.add('active');
+    } else if (tab === 'timer') {
+        DOM.timerTabContent.classList.add('active');
+        DOM.timerTab.classList.add('active');
+        // Update timer display when switching to timer tab
+        updateTimerDisplay();
+    } else if (tab === 'alarm') {
+        DOM.alarmTabContent.classList.add('active');
+        DOM.alarmTab.classList.add('active');
+        updateAlarmDisplay();
+    }
+}
+
+// ========================================
 // EVENT LISTENERS
 // ========================================
 function setupEventListeners() {
-    // Control buttons
+    // ===== Pomodoro Controls =====
     DOM.startBtn.addEventListener('click', startTimer);
     DOM.pauseBtn.addEventListener('click', pauseTimer);
     DOM.resetBtn.addEventListener('click', resetTimer);
     DOM.skipBtn.addEventListener('click', skipTimer);
     
-    // Mode buttons
     DOM.focusMode.addEventListener('click', () => {
         pauseTimer();
         setMode('focus');
@@ -358,12 +674,40 @@ function setupEventListeners() {
         setMode('longBreak');
     });
     
-    // Settings
+    // ===== Timer Controls =====
+    DOM.timerStartBtn.addEventListener('click', startTimerMode);
+    DOM.timerPauseBtn.addEventListener('click', pauseTimerMode);
+    DOM.timerResetBtn.addEventListener('click', resetTimerMode);
+    
+    // Update timer when inputs change
+    [DOM.timerHours, DOM.timerMinutesInput, DOM.timerSecondsInput].forEach(input => {
+        input.addEventListener('change', resetTimerMode);
+    });
+    
+    // ===== Alarm Controls =====
+    DOM.alarmSetBtn.addEventListener('click', setAlarm);
+    DOM.alarmStopBtn.addEventListener('click', () => {
+        stopAlarm();
+        stopAlarmSound();
+    });
+    
+    DOM.alarmSoundSelect.addEventListener('change', (e) => {
+        state.alarmSound = e.target.value;
+    });
+    
+    // ===== Settings =====
     DOM.saveSettings.addEventListener('click', saveSettings);
     
-    // Keyboard shortcuts
+    // ===== Tabs =====
+    DOM.pomodoroTab.addEventListener('click', () => switchTab('pomodoro'));
+    DOM.timerTab.addEventListener('click', () => switchTab('timer'));
+    DOM.alarmTab.addEventListener('click', () => switchTab('alarm'));
+    
+    // ===== Keyboard Shortcuts =====
     document.addEventListener('keydown', (e) => {
-        // Space: Start/Pause
+        // Only for pomodoro tab
+        if (!DOM.pomodoroTabContent.classList.contains('active')) return;
+        
         if (e.key === ' ' || e.key === 'Space') {
             e.preventDefault();
             if (state.isRunning) {
@@ -372,17 +716,15 @@ function setupEventListeners() {
                 startTimer();
             }
         }
-        // R: Reset
         if (e.key === 'r' || e.key === 'R') {
             resetTimer();
         }
-        // S: Skip
         if (e.key === 's' || e.key === 'S') {
             skipTimer();
         }
     });
     
-    // Request notification permission on first click
+    // ===== Notification Permission =====
     document.addEventListener('click', () => {
         if ('Notification' in window && Notification.permission === 'default') {
             Notification.requestPermission();
