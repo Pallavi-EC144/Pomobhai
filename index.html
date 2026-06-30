@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🍅 Pomobhai - Pomodoro Timer</title>
+    <title>🍅 Pomobhai - Timer & Alarm</title>
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍅</text></svg>">
 </head>
@@ -15,57 +15,167 @@
             <span id="sessionCount">Sessions: 0</span>
         </header>
 
-        <!-- Timer Display -->
-        <div class="timer-display">
-            <svg class="progress-ring" width="250" height="250">
-                <circle class="progress-ring__bg" 
-                        cx="125" cy="125" r="110" 
-                        fill="none" stroke="#2c3e50" stroke-width="8"/>
-                <circle id="progressRing" 
-                        cx="125" cy="125" r="110" 
-                        fill="none" stroke="#e94560" stroke-width="8"
-                        stroke-dasharray="691.15" 
-                        stroke-dashoffset="0"
-                        stroke-linecap="round"/>
-            </svg>
-            <div class="timer-text">
-                <span id="minutes">25</span>:<span id="seconds">00</span>
+        <!-- Tab Navigation -->
+        <div class="tabs">
+            <button id="pomodoroTab" class="tab-btn active">🍅 Pomodoro</button>
+            <button id="timerTab" class="tab-btn">⏱️ Timer</button>
+            <button id="alarmTab" class="tab-btn">🔔 Alarm</button>
+        </div>
+
+        <!-- ============ POMODORO TAB ============ -->
+        <div id="pomodoroTabContent" class="tab-content active">
+            <!-- Timer Display -->
+            <div class="timer-display">
+                <svg class="progress-ring" width="250" height="250">
+                    <circle class="progress-ring__bg" 
+                            cx="125" cy="125" r="110" 
+                            fill="none" stroke="#2c3e50" stroke-width="8"/>
+                    <circle id="progressRing" 
+                            cx="125" cy="125" r="110" 
+                            fill="none" stroke="#e94560" stroke-width="8"
+                            stroke-dasharray="691.15" 
+                            stroke-dashoffset="0"
+                            stroke-linecap="round"/>
+                </svg>
+                <div class="timer-text">
+                    <span id="minutes">25</span>:<span id="seconds">00</span>
+                </div>
+            </div>
+
+            <!-- Mode Indicator -->
+            <div class="mode-indicator">
+                <span id="current-mode">🎯 Focus</span>
+            </div>
+
+            <!-- Control Buttons -->
+            <div class="controls">
+                <button id="startBtn" class="btn btn-start">▶ Start</button>
+                <button id="pauseBtn" class="btn btn-pause">⏸ Pause</button>
+                <button id="resetBtn" class="btn btn-reset">⟳ Reset</button>
+                <button id="skipBtn" class="btn btn-skip">⏭ Skip</button>
+            </div>
+
+            <!-- Mode Buttons -->
+            <div class="mode-buttons">
+                <button id="focusMode" class="mode-btn active">🎯 Focus</button>
+                <button id="shortBreak" class="mode-btn">☕ Short</button>
+                <button id="longBreak" class="mode-btn">🌙 Long</button>
+            </div>
+
+            <!-- Statistics -->
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-label">Today</span>
+                    <span id="todaySessions" class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total</span>
+                    <span id="totalSessions" class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Focus Time</span>
+                    <span id="focusTime" class="stat-value">0h</span>
+                </div>
             </div>
         </div>
 
-        <!-- Mode Indicator -->
-        <div class="mode-indicator">
-            <span id="current-mode">🎯 Focus</span>
-        </div>
-
-        <!-- Control Buttons -->
-        <div class="controls">
-            <button id="startBtn" class="btn btn-start">▶ Start</button>
-            <button id="pauseBtn" class="btn btn-pause">⏸ Pause</button>
-            <button id="resetBtn" class="btn btn-reset">⟳ Reset</button>
-            <button id="skipBtn" class="btn btn-skip">⏭ Skip</button>
-        </div>
-
-        <!-- Mode Buttons -->
-        <div class="mode-buttons">
-            <button id="focusMode" class="mode-btn active">🎯 Focus</button>
-            <button id="shortBreak" class="mode-btn">☕ Short</button>
-            <button id="longBreak" class="mode-btn">🌙 Long</button>
-        </div>
-
-        <!-- Statistics -->
-        <div class="stats">
-            <div class="stat-item">
-                <span class="stat-label">Today</span>
-                <span id="todaySessions" class="stat-value">0</span>
+        <!-- ============ TIMER TAB ============ -->
+        <div id="timerTabContent" class="tab-content">
+            <div class="timer-display">
+                <svg class="progress-ring" width="250" height="250">
+                    <circle class="progress-ring__bg" 
+                            cx="125" cy="125" r="110" 
+                            fill="none" stroke="#2c3e50" stroke-width="8"/>
+                    <circle id="timerProgressRing" 
+                            cx="125" cy="125" r="110" 
+                            fill="none" stroke="#3498db" stroke-width="8"
+                            stroke-dasharray="691.15" 
+                            stroke-dashoffset="0"
+                            stroke-linecap="round"/>
+                </svg>
+                <div class="timer-text">
+                    <span id="timerMinutes">00</span>:<span id="timerSeconds">00</span>
+                </div>
             </div>
-            <div class="stat-item">
-                <span class="stat-label">Total</span>
-                <span id="totalSessions" class="stat-value">0</span>
+
+            <div class="timer-inputs">
+                <div class="input-group">
+                    <label>Hours</label>
+                    <input type="number" id="timerHours" value="0" min="0" max="23">
+                </div>
+                <div class="input-group">
+                    <label>Minutes</label>
+                    <input type="number" id="timerMinutesInput" value="5" min="0" max="59">
+                </div>
+                <div class="input-group">
+                    <label>Seconds</label>
+                    <input type="number" id="timerSecondsInput" value="0" min="0" max="59">
+                </div>
             </div>
-            <div class="stat-item">
-                <span class="stat-label">Focus Time</span>
-                <span id="focusTime" class="stat-value">0h</span>
+
+            <div class="controls">
+                <button id="timerStartBtn" class="btn btn-start">▶ Start</button>
+                <button id="timerPauseBtn" class="btn btn-pause">⏸ Pause</button>
+                <button id="timerResetBtn" class="btn btn-reset">⟳ Reset</button>
+            </div>
+
+            <div class="timer-status">
+                <span id="timerStatus">Ready</span>
+            </div>
+        </div>
+
+        <!-- ============ ALARM TAB ============ -->
+        <div id="alarmTabContent" class="tab-content">
+            <div class="alarm-display">
+                <div class="alarm-time" id="alarmTime">
+                    <span id="alarmHours">00</span>:<span id="alarmMinutes">00</span>
+                </div>
+                <div class="alarm-status" id="alarmStatus">⏰ Alarm is OFF</div>
+            </div>
+
+            <div class="alarm-inputs">
+                <div class="input-group">
+                    <label>Hours</label>
+                    <input type="number" id="alarmHoursInput" value="0" min="0" max="23">
+                </div>
+                <div class="input-group">
+                    <label>Minutes</label>
+                    <input type="number" id="alarmMinutesInput" value="0" min="0" max="59">
+                </div>
+                <div class="input-group">
+                    <label>AM/PM</label>
+                    <select id="alarmAmPm">
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button id="alarmSetBtn" class="btn btn-save">🔔 Set Alarm</button>
+                <button id="alarmStopBtn" class="btn btn-reset">⏹️ Stop Alarm</button>
+            </div>
+
+            <div class="alarm-info">
+                <div class="stat-item">
+                    <span class="stat-label">Alarm Set For</span>
+                    <span id="alarmSetTime" class="stat-value">Not Set</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Time Until</span>
+                    <span id="alarmTimeUntil" class="stat-value">--:--</span>
+                </div>
+            </div>
+
+            <!-- Alarm Sound Selector -->
+            <div class="alarm-sound-selector">
+                <label>Alarm Sound</label>
+                <select id="alarmSoundSelect">
+                    <option value="beep">🔔 Classic Beep</option>
+                    <option value="gentle">🎵 Gentle Chime</option>
+                    <option value="urgent">🚨 Urgent</option>
+                    <option value="phone">📱 Phone Ring</option>
+                </select>
             </div>
         </div>
 
